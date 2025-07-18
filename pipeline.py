@@ -15,10 +15,6 @@ import time
 from functools import wraps
 from tqdm import tqdm
 
-
-os.environ['HF_HOME'] = "/lustre/scratch/client/movian/research/users/phuclh12/.cache/huggingface"
-
-
 def profile_time(func_name: str = None):
     """
     Decorator to profile execution time of functions.
