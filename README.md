@@ -52,7 +52,6 @@ enhanced = pipeline.hiwave(
 - Python 3.8+
 - PyTorch 2.0+
 - CUDA GPU (recommended)
-- 16GB+ VRAM
 
 ## Installation
 
