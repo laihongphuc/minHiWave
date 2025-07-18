@@ -676,7 +676,7 @@ class CustomStableDiffusionPipeline:
             cosine_factor = 0.5 * (1 + torch.cos(torch.pi * (self.ddim_scheduler.config.num_train_timesteps  - t) / self.ddim_scheduler.config.num_train_timesteps )).cpu()
             c1 = cosine_factor ** 2
             if i <= 15:
-            patch_wise = patch_wise * (c1) + ddim_inverted_patch_wise[-(i)] * (1 - c1)
+                patch_wise = patch_wise * (c1) + ddim_inverted_patch_wise[-(i)] * (1 - c1)
             # DemoDiffusion
             count = torch.zeros_like(latent_high_resolution)
             value = torch.zeros_like(latent_high_resolution)
