@@ -129,7 +129,7 @@ class CustomStableDiffusionPipeline:
         pipeline = StableDiffusionXLPipeline.from_pretrained(
             self.model_id,
             torch_dtype=self.torch_dtype,
-            local_files_only=True
+            # local_files_only=True
         )
         
         # Assign components from the pipeline
