@@ -441,7 +441,8 @@ class CustomStableDiffusionPipeline:
         width: int = 1024,
         height: int = 1024,
         seed: Optional[int] = None,
-        output_path: Optional[str] = None
+        output_path: Optional[str] = None,
+        latents: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
         Generate image using the custom pipeline.
@@ -480,7 +481,7 @@ class CustomStableDiffusionPipeline:
             (1, self.unet.config.in_channels, height // 8, width // 8),
             device=self.device,
             dtype=self.torch_dtype
-        )
+        ) if latents is None else latents 
         
         # Denoising loop
         for i, t in enumerate(timesteps):
@@ -575,7 +576,7 @@ class CustomStableDiffusionPipeline:
             image: torch.Tensor, 
             prompt: str,
             num_inference_steps: int = 50,
-            guidance_scale: float = 5.0,
+            guidance_scale: float = 7.5,
             seed: Optional[int] = None,
             show_progress: bool = True,
         ):
@@ -647,13 +648,15 @@ class CustomStableDiffusionPipeline:
                     }
                 ).sample
             
-            # DDIM step
-            patch_wise = self.ddim_scheduler.step(
-                noise_pred,
-                t,
-                patch_wise,
-                eta=0.0  # Deterministic
-            ).prev_sample
+            current_t = max(0, t.item() - (1000 // num_inference_steps))
+            next_t = t
+            alpha_t = self.alphas_cumprod[current_t]
+            alpha_t_next = self.alphas_cumprod[next_t]
+                    # Inverted update step (re-arranging the update step to get x(t) (new latents) as a function of x(t-1) (current latents)
+            patch_wise = (patch_wise - (1 - alpha_t).sqrt() * noise_pred) * (alpha_t_next.sqrt() / alpha_t.sqrt()) + (
+                1 - alpha_t_next
+            ).sqrt() * noise_pred
+
             ddim_inverted_patch_wise.append(patch_wise)
         
 
@@ -671,7 +674,9 @@ class CustomStableDiffusionPipeline:
             
         for i, t in enumerate(pbar_loop):
             cosine_factor = 0.5 * (1 + torch.cos(torch.pi * (self.ddim_scheduler.config.num_train_timesteps  - t) / self.ddim_scheduler.config.num_train_timesteps )).cpu()
-            c1 = cosine_factor ** 3
+            c1 = cosine_factor ** 2
+            if i <= 15:
+            patch_wise = patch_wise * (c1) + ddim_inverted_patch_wise[-(i)] * (1 - c1)
             # DemoDiffusion
             count = torch.zeros_like(latent_high_resolution)
             value = torch.zeros_like(latent_high_resolution)
@@ -717,11 +722,6 @@ class CustomStableDiffusionPipeline:
             
             # Compute previous sample
             patch_wise = self.ddim_scheduler.step(noise_pred, t, patch_wise).prev_sample
-
-            # Skip residual
-            if i <= 15:
-                patch_wise = patch_wise * c1 + (1 - c1) * ddim_inverted_patch_wise[-(i + 1)]
-
 
             for patch, (h_start, h_end, w_start, w_end) in zip(patch_wise, views):
                 count[:, :, h_start:h_end, w_start:w_end] += 1
