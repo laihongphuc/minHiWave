@@ -17,9 +17,8 @@ def main():
     # Example 1: Generate a new image
     print("Generating a new image...")
     image = pipeline.generate_image(
-        prompt="A beautiful sunset over mountains, high resolution, detailed",
-        negative_prompt="blurry, low quality, distorted",
-        num_inference_steps=30,
+        prompt="a cute fluffy rabbit pilot walking on a military aircraft carrier, unreal engine render, 8k, cinematic",
+        num_inference_steps=50,
         guidance_scale=7.5,
         width=1024,
         height=1024,
@@ -36,9 +35,9 @@ def main():
     
     enhanced_image = pipeline.hiwave(
         image=input_tensor,
-        prompt="Enhanced version with better details and clarity",
-        num_inference_steps=30,
-        guidance_scale=5.0,
+        prompt="a cute fluffy rabbit pilot walking on a military aircraft carrier, unreal engine render, 8k, cinematic",
+        num_inference_steps=50,
+        guidance_scale=7.5,
         seed=42
     )
     
